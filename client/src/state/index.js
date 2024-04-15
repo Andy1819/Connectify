@@ -1,16 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
-import axios from 'axios'
-
+import axios from 'axios';
+import { io } from 'socket.io-client';
 const initialState = {
   mode: "light",
   user: null,
   token: null,
+  socket: null,
+  activeUsers: [],
   posts: [],
   chatFriend: null, // state to hold the selected chat friend
   notifications: [], // state to hold notification
   // BackendUrl: "https://social-media-web-app-o59e.onrender.com",
   BackendUrl: "http://localhost:3001",
 };
+
 
 export const authSlice = createSlice({
   name: "auth",
@@ -54,8 +57,19 @@ export const authSlice = createSlice({
     setNotifications: (state, action) => {
       state.notifications = action.payload.notifications; // set the notifications
     },
+
+    //setting socket connection
+    setSocket: (state, action) => {
+      state.socket = action.payload;
+    },
+
+    //to set active users
+    setActiveUsers: (state, action) => {
+      state.activeUsers = action.payload;
+    },
   },
 });
+
 
 export const {
   setMode,
@@ -66,6 +80,8 @@ export const {
   setPost,
   setChatFriend,
   setNotifications,
+  setSocket,
+  setActiveUsers,
 } = authSlice.actions;
 
 
@@ -107,6 +123,11 @@ export const getMsgs = async (id) => {
   catch(error){
       console.log(' Error while getting messages api ', error.message);
   }
+}
+
+export const socket = () => async (dispatch) => {
+  const socket = io('ws://localhost:9000');
+  dispatch(setSocket(socket));
 }
 
 

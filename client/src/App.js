@@ -1,10 +1,11 @@
-import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "screens/homePage";
 import LoginPage from "screens/loginPage";
 import ProfilePage from "screens/profilePage";
 import Notification from "screens/notification";
 import Feedback from "screens/feedback";
 import ChatSection from "screens/chatSection";
+import socketIO from 'socket.io-client';
 //useMemo is a React Hook that lets you cache the result of a calculation between re-renders.
 import { useMemo } from "react";
 // useSelector is a hook provided by React Redux that allows functional components to extract and access data from the Redux store
@@ -14,6 +15,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 // createTheme is used to create a theme object that can be used to customize the styling of components within a Material-UI application.
 import { createTheme } from "@mui/material/styles";
 import { themeSettings } from "./theme";
+const socket = socketIO.connect('http://localhost:9000');
 function App() {
   const mode = useSelector((state) => state.mode); // initial it set to the light mode
   const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);

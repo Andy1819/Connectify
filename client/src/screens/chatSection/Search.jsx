@@ -1,5 +1,5 @@
 
-import { Box, InputBase, styled } from '@mui/material';
+import { Box, InputBase, styled ,useTheme} from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 
@@ -8,15 +8,16 @@ const Component = styled(Box)`
     height: 42px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid black;
 `;
-
+            
 const Wrapper = styled(Box)`
     position: relative;
-    border-radius: 10px;
-    background-color: #f0f2f5;
+    border-radius: 9px;
+    background-color: ${({mode}) => (mode === "light" ? "#F0F0F0" : "#333333")};
     margin: 0 13px;
     width: 100%;
+    gap: 3rem;
+    padding: 0.1rem 1.5rem;
     ${'' /* background-color: ${({mode}) => (mode === "light" ? "#pink" : "#orange")}; */}
 `;
 
@@ -40,6 +41,8 @@ const InputField = styled(InputBase) `
 const Search = () => {
 
     const mode = useSelector((state) => state.mode);
+    const theme=useTheme();
+    
 
     return (
         <Component>

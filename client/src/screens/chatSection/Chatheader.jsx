@@ -1,6 +1,6 @@
 import { Typography, Divider, IconButton } from "@mui/material";
 import { Call, VideoCall, Settings } from "@mui/icons-material";
-import UserChatFriend from "screens/chatSection/UserChatFriend";
+import Headername from "./Headername";
 import { useSelector } from "react-redux";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
@@ -14,28 +14,34 @@ const Chatheader = () => {
 
   return (
     
-    <WidgetWrapper m="0 0 10 10"
-    >
-        <FlexBetween>
+    <WidgetWrapper >
+        <FlexBetween sx={{height:'4vh'}}>
           {friendId ? (
-            <UserChatFriend {...{ friendId, name, online, userPicturePath }} />
+            <Headername {...{ friendId, name, online, userPicturePath }} />
           ) : (
             <Typography variant="body1">No friend selected</Typography>
           )}
+
           <FlexBetween>
+
             <IconButton aria-label="Phone call">
               <Call />
             </IconButton>
+
             <IconButton aria-label="Video call">
               <VideoCall />
             </IconButton>
+
             <IconButton aria-label="Settings">
               <Settings />
             </IconButton>
+
           </FlexBetween>
+
         </FlexBetween>
 
-        <Divider sx={{ mb: "1.5rem" }} />
+        <Divider sx={{ mt: "1.0rem" }} />
+
     </WidgetWrapper>
   );
 };

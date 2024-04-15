@@ -20,6 +20,8 @@ import { verifyToken } from "./middleware/auth.js";
 import User from "./models/User.js";
 import Post from "./models/Post.js";
 import { users, posts } from "./data/index.js";
+import { Server } from "socket.io";
+import http from 'http';
 dotenv.config();
 const app = express();
 
@@ -51,6 +53,7 @@ const storage = multer.diskStorage({
   },
 });
 
+
 const upload = multer({ storage: storage });
 
 /* ROUTES WITH FILE */
@@ -70,6 +73,22 @@ app.use("/posts", postRoutes);
 app.use("/message", msg);
 app.use("/conversation", conversation);
 
+const server = http.createServer(app); // Assuming `app` is your Express application
+
+const io = new Server(server, {
+    cors: {
+        origin: 'http://localhost:3000'
+    }
+});
+
+//Add this before the app.get() block
+io.on('connection', (socket) => {
+  console.log(`${socket.id} user just connected!`);
+  socket.on('disconnect', () => {
+    console.log('A user disconnected');
+  });
+});
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -80,3 +99,31 @@ app.listen(PORT, () => {
   // User.insertMany(users);
   // Post.insertMany(posts);
 });
+
+// http.listen(PORT, () => {
+//   console.log(`Server listening on ${PORT}`);
+// });
+
+server.listen(9000, () => {
+  console.log('HTTP server is running on port 9000');
+});
+
+io.on('connection', (socket) => {
+  console.log('A client connected');
+  // Your socket connection handling logic here
+
+
+  let users = [];
+
+  const addUser = (userData, socketId) => {
+    !users.some(user => user._id == userData._id) && users.push({ ...userData, socketId});
+    console.log(userData);
+  }
+
+  socket.on("addUsers", userData => {
+    addUser(userData, socket.id);
+    io.emit("getUsers",users);
+  })
+});
+
+// for( let i=0;i<users.length;i++) console.log(users[i]);
