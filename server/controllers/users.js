@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import nodemailer from "nodemailer";
 import UserFeedBack from "../models/UserFeedBack.js";
+import Post from "../models/Post.js";
 
 /* Get User details  */
 
@@ -429,5 +430,83 @@ export const updateNotificationStatus = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(404).json({ message: err.message });
+  }
+};
+
+/* Update User Profile */
+export const updateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const {
+      firstName,
+      lastName,
+      location,
+      occupation,
+      twitterProfile,
+      linkedinProfile,
+    } = req.body;
+    console.log(
+      "firstName",
+      firstName,
+      "lastName",
+      lastName,
+      "location",
+      location,
+      "occupation",
+      occupation,
+      "twitterProfile",
+      twitterProfile,
+      "linkedinProfile",
+      linkedinProfile
+    );
+    // update user in user schema
+    const user = await User.findById(userId);
+
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.location = location;
+    user.occupation = occupation;
+    user.twitterProfile = twitterProfile;
+    user.linkedinProfile = linkedinProfile;
+    await user.save();
+
+    // update  user details in feedback schema if user has given feedback at least one time
+    const feedback = await UserFeedBack.findOne({ email: user.email });
+    if (feedback) {
+      feedback.firstName = firstName;
+      feedback.lastName = lastName;
+      await feedback.save();
+    }
+
+    // update user details in post schema
+    const posts = await Post.find({ userId });
+    const updatePromises = posts.map(async (post) => {
+      post.firstName = firstName;
+      post.lastName = lastName;
+      post.location = location;
+      return post.save();
+    });
+    await Promise.all(updatePromises);
+
+    // Return all posts after after updating the user data so it refelct in real time
+    // when user is home page
+    const allfeedposts = await Post.find().sort({ _id: -1 });
+
+    // when user is on their own profile page
+    const userallposts = await Post.find({ userId }).sort({ _id: -1 }); // Return posts of a particular user
+
+    res.status(200).json({
+      success: true,
+      message: "User profile updated successfully",
+      allfeedposts: allfeedposts,
+      userallposts: userallposts,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 };

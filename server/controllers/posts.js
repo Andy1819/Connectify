@@ -4,8 +4,9 @@ import User from "../models/User.js";
 /* CREATE POST */
 export const createPost = async (req, res) => {
   try {
-    const { userId, description, picturePath } = req.body;
-
+    const { userId, description } = req.body;
+    const picturePath = req.imageUrl; // after the image upload in cloudinary we get the image url from the request object
+    console.log("picturePath", picturePath);
     const user = await User.findById(userId);
 
     const newPost = new Post({
@@ -15,7 +16,7 @@ export const createPost = async (req, res) => {
       location: user.location,
       description,
       userPicturePath: user.picturePath,
-      picturePath,
+      picturePath: picturePath ? picturePath : "",
       likes: {},
       comments: [],
     });
@@ -24,47 +25,33 @@ export const createPost = async (req, res) => {
 
     // Return all posts after creating a new post
     const posts = await Post.find().sort({ _id: -1 });
-    const allPosts = posts.map((post) => post.toObject()); // Convert each post to object
-    res.status(201).json(allPosts);
+    // const allPosts = posts.map((post) => post.toObject()); // Convert each post to object
+    res.status(201).json(posts);
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
   }
 };
 
-/* GET getFeedPosts, getUserPosts, ( here we have to add the get friends post ) */
+/* GET getFeedPosts*/
 export const getFeedPosts = async (req, res) => {
   try {
-    // const posts = await Post.find(); // Return all posts
     const posts = await Post.find().sort({ _id: -1 });
-    const allPosts = posts.map((post) => post.toObject()); // Convert each post to object
-    res.status(200).json(allPosts);
+    // const allPosts = posts.map((post) => post.toObject()); // Convert each post to object
+    res.status(200).json(posts);
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
   }
 };
 
+/*GET getUserPosts */
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
     const posts = await Post.find({ userId }).sort({ _id: -1 }); // Return posts of a particular user
-    const allPosts = posts.map((post) => post.toObject()); // Convert each post to object
-    res.status(200).json(allPosts);
-  } catch (error) {
-    console.log(error);
-    res.status(404).json({ message: error.message });
-  }
-};
-
-/* in the userFeed we return only their friends and their own post not all the posts of all the user */
-export const getFriendsPosts = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const user = await User.findById(userId);
-    const friendsPosts = await Post.find({ userId: { $in: user.friends } }); // Return posts of friends
-    const allPosts = friendsPosts.map((post) => post.toObject()); // Convert each post to object
-    res.status(200).json(allPosts);
+    // const allPosts = posts.map((post) => post.toObject()); // Convert each post to object
+    res.status(200).json(posts);
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
@@ -93,7 +80,6 @@ export const likePost = async (req, res) => {
       // if the user not liked the post then we add the like
       post.likes.set(userId, true);
     }
-
     // after that we return the updated post
     const updatedPost = await Post.findByIdAndUpdate(
       id,
@@ -196,9 +182,8 @@ export const deletePost = async (req, res) => {
     } else {
       posts = await Post.find().sort({ _id: -1 });
     }
-    const allPosts = posts.map((post) => post.toObject());
 
-    res.status(200).json(allPosts);
+    res.status(200).json(posts);
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Internal Server Error!" });
@@ -210,7 +195,9 @@ export const deletePost = async (req, res) => {
 export const updatePost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { description, picturePath } = req.body;
+    const { description } = req.body;
+    const picturePath = req.imageUrl;
+    console.log("picturePath", picturePath);
 
     const post = await Post.findById(postId);
     if (!post) {

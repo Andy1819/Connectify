@@ -11,23 +11,29 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
+import connectDB from "./config/db.js";
 import msg from "./routes/msg.js";
 import conversation from "./routes/conversation.js";
-import connectDB from "./config/db.js";
 import { register } from "./controllers/auth.js";
 import { createPost, updatePost } from "./controllers/posts.js"; // Create Post and Update Post
 import { verifyToken } from "./middleware/auth.js";
+import uploadImage from "./controllers/imageController.js";
+import { upload } from "./utils/multer.js";
 import User from "./models/User.js";
 import Post from "./models/Post.js";
 import { users, posts } from "./data/index.js";
 import { Server } from "socket.io";
-import http from 'http';
+import http from "http";
+
 dotenv.config();
 const app = express();
 
 /* CONFIGURATION  when we use type=module */
+
+// these below 3 lines are required for only advertisement widget and linkedin and twitterIcon
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
 app.use(cookieParser());
 app.use(express.json());
@@ -37,32 +43,58 @@ app.use(morgan("common"));
 app.use(bodyParser.json({ limit: "30mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "30mb", extended: true }));
 app.use(cors());
-app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 
 /* DataBase Connection */
 const PORT = process.env.PORT || 5001;
 connectDB();
 
-/* FILE STORAGE */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "public/assets");
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
+// /* FILE STORAGE */
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "public/assets");
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, file.originalname);
+//   },
+// });
 
-
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
 /* ROUTES WITH FILE */
-app.post("/auth/register", upload.single("picture"), register);
-app.post("/posts", verifyToken, upload.single("picture"), createPost);
+
+/* --------------------------> Use Cloudinary for image store <-------------------------------*/
+
+/*Register */
+app.post("/auth/register", upload.single("picture"), uploadImage, register);
+
+/*Create Post */
+app.post(
+  "/posts",
+  verifyToken,
+  upload.single("picture"),
+  uploadImage,
+  createPost
+);
+
+/*Update Post */
 app.put(
   "/posts/:postId/editPost",
   verifyToken,
-  upload.single("picture"),
+  upload.single("picture"), // Attach upload middleware directly to the route
+  (req, res, next) => {
+    // Check if picture exists in request file
+    if (req.file) {
+      // If picture exists, execute uploadImage middleware
+      uploadImage(req, res, (err) => {
+        if (err) {
+          return res.status(400).json({ error: "Failed to upload picture." });
+        }
+        next(); // Move to the next middleware
+      });
+    } else {
+      next(); // Move to the next middleware directly
+    }
+  },
   updatePost
 );
 
@@ -73,19 +105,39 @@ app.use("/posts", postRoutes);
 app.use("/message", msg);
 app.use("/conversation", conversation);
 
+/* SOCKET.IO Part */
 const server = http.createServer(app); // Assuming `app` is your Express application
 
 const io = new Server(server, {
-    cors: {
-        origin: 'http://localhost:3000'
-    }
+  cors: {
+    origin: "http://localhost:3000",
+    // origin: "https://social-media-web-app-mu.vercel.app",
+  },
 });
 
 //Add this before the app.get() block
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`${socket.id} user just connected!`);
-  socket.on('disconnect', () => {
-    console.log('A user disconnected');
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
+});
+
+io.on("connection", (socket) => {
+  console.log("A client connected");
+  // Your socket connection handling logic here
+
+  let users = [];
+
+  const addUser = (userData, socketId) => {
+    !users.some((user) => user._id == userData._id) &&
+      users.push({ ...userData, socketId });
+    console.log(userData);
+  };
+
+  socket.on("addUsers", (userData) => {
+    addUser(userData, socket.id);
+    io.emit("getUsers", users);
   });
 });
 
@@ -100,30 +152,6 @@ app.listen(PORT, () => {
   // Post.insertMany(posts);
 });
 
-// http.listen(PORT, () => {
-//   console.log(`Server listening on ${PORT}`);
-// });
-
 server.listen(9000, () => {
-  console.log('HTTP server is running on port 9000');
+  console.log("HTTP server is running on port 9000");
 });
-
-io.on('connection', (socket) => {
-  console.log('A client connected');
-  // Your socket connection handling logic here
-
-
-  let users = [];
-
-  const addUser = (userData, socketId) => {
-    !users.some(user => user._id == userData._id) && users.push({ ...userData, socketId});
-    console.log(userData);
-  }
-
-  socket.on("addUsers", userData => {
-    addUser(userData, socket.id);
-    io.emit("getUsers",users);
-  })
-});
-
-// for( let i=0;i<users.length;i++) console.log(users[i]);

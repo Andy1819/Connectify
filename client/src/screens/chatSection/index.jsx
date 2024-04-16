@@ -1,7 +1,5 @@
-import { Box, Typography, useMediaQuery, IconButton } from "@mui/material";
-import { Send, Photo, Mic, EmojiEmotions } from "@mui/icons-material"; // Import icons
+import { Box, useMediaQuery } from "@mui/material";
 import { useSelector } from "react-redux";
-import { useState } from "react";
 import Navbar from "screens/navbar";
 import FriendListWidget from "./FriendListWidget";
 import ChatBox from "./ChatBox";

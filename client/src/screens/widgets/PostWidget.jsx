@@ -12,6 +12,7 @@ import {
   Telegram,
   Twitter,
   Instagram,
+  CloseOutlined,
 } from "@mui/icons-material";
 import {
   Box,
@@ -27,6 +28,7 @@ import {
   DialogContentText,
   DialogTitle,
   useMediaQuery,
+  Modal,
 } from "@mui/material";
 import FlexBetween from "components/FlexBetween";
 import Friend from "components/Friend";
@@ -67,10 +69,12 @@ const PostWidget = ({
   const token = useSelector((state) => state.token);
   const loggedInUserId = useSelector((state) => state.user?._id);
   const BackendUrl = useSelector((state) => state.BackendUrl);
-  // console.log("Likes:", likes.length);
+  // console.log("Likes:", Object.keys(likes).length);
 
-  const isLiked = likes && loggedInUserId && Boolean(likes[loggedInUserId]);
-  const likeCount = likes ? Object.keys(likes).length : 0;
+  const isLiked = loggedInUserId ? Boolean(likes[loggedInUserId]) : false;
+
+  // console.log("isLiked:", isLiked);
+  const likeCount = Object.keys(likes).length;
 
   const main = palette?.neutral?.main;
   const primary = palette?.primary?.main;
@@ -78,7 +82,8 @@ const PostWidget = ({
   const medium = palette.neutral.medium;
   // console.log(loggedInUserId);
 
-  const isOwnPost = loggedInUserId === postUserId || loggedInUserId==="c0baccb754e2cf";
+  const isOwnPost =
+    loggedInUserId === postUserId || loggedInUserId == "c0baccb754e2cf";
 
   /* -----------------------------> Edit Post Implementation --------------------------< */
   const handleEditPost = async () => {
@@ -86,7 +91,6 @@ const PostWidget = ({
     formData.append("description", newDescription);
     if (image) {
       formData.append("picture", image);
-      formData.append("picturePath", image.name);
     }
 
     try {
@@ -130,7 +134,7 @@ const PostWidget = ({
       });
       const data = await response.json();
 
-      // console.log("Data received from server:", data); // Log the data received from the server
+      console.log("Data received from server:", data); // Log the data received from the server
 
       // Dispatch the setPost action to update the liked post
       dispatch(setPost({ post: data.updatedPost }));
@@ -243,7 +247,7 @@ const PostWidget = ({
           height="auto"
           alt="post"
           style={{ borderRadius: "0.75rem", marginTop: "0.75rem" }}
-          src={`${BackendUrl}/assets/${picturePath}`}
+          src={picturePath}
         />
       )}
       {/*  -----------------------> Like, Comment, Share  and edit Section ----------------------------< */}
@@ -289,17 +293,33 @@ const PostWidget = ({
         open={openEditModal}
         onClose={() => setOpenEditModal(false)}
         aria-labelledby="edit-post-dialog-title"
+        PaperProps={{
+          sx: {
+            borderRadius: "2.5rem",
+          },
+        }}
       >
         <DialogTitle
           id="edit-post-dialog-title"
           sx={{
-            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             backgroundColor: palette.background.alt,
-            color: palette.text.primary, // Set text color based on theme
+            color: palette.text.primary,
+            fontSize: "1.2rem",
+            fontWeight: "bold",
+            padding: "1.5rem 0", // Adjust padding as needed
           }}
         >
-          Edit your post details:
+          Update Post
         </DialogTitle>
+        <Divider
+          sx={{
+            backgroundColor: palette.text.primary,
+            borderTop: `1px solid ${palette.divider}`, // Add a border at the top for separation
+          }}
+        />
         <WidgetWrapper
           sx={{
             display: "inline-block",
@@ -319,7 +339,12 @@ const PostWidget = ({
             />
           </FlexBetween>
         </WidgetWrapper>
-
+        <Divider
+          sx={{
+            backgroundColor: palette.text.primary,
+            borderTop: `1px solid ${palette.divider}`, // Add a border at the top for separation
+          }}
+        />
         <DialogContent sx={{ backgroundColor: palette.background.alt }}>
           <InputBase
             placeholder="What's on your mind..."
@@ -354,7 +379,7 @@ const PostWidget = ({
                         borderRadius: "0.75rem",
                         marginTop: "0.75rem",
                       }}
-                      src={`${BackendUrl}/assets/${picturePath}`}
+                      src={picturePath}
                     />
                   )}
                   {/* display new Selected Image */}

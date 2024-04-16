@@ -1,5 +1,5 @@
 
-import { Box, InputBase, styled ,useTheme} from '@mui/material';
+import { Box, InputBase, styled} from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 
@@ -41,7 +41,6 @@ const InputField = styled(InputBase) `
 const Search = () => {
 
     const mode = useSelector((state) => state.mode);
-    const theme=useTheme();
     
 
     return (

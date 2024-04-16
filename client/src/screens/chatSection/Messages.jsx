@@ -29,7 +29,7 @@ const Component = styled(Box)`
 const Container = styled(Box)`
     padding: 10px 40px;
 `;
-
+// props data coming from ChatBox.jsx
 const Messages = ({ friendId, conversation }) => {
     
 

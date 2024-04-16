@@ -29,7 +29,7 @@ const NotificationWidget = ({ userId }) => {
             <Box
               sx={{
                 "&:hover": {
-                  backgroundColor: mode === "dark" ? "#333333" : "#EBEBEA",
+                  backgroundColor: mode == "dark" ? "#333333" : "#EBEBEA",
                   cursor: "pointer",
                 },
               }}
@@ -47,7 +47,7 @@ const NotificationWidget = ({ userId }) => {
               <Divider
                 sx={{
                   color:
-                    mode === "dark"
+                    mode == "dark"
                       ? `${palette.primary.main} ${palette.background.default}`
                       : "light",
                 }}

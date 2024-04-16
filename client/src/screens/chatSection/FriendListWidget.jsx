@@ -5,7 +5,7 @@ import Search from "./Search";
 import { useDispatch, useSelector } from "react-redux";
 import { Divider } from "@mui/material";
 import styled from "@emotion/styled";
-import { useEffect, useRef, useStore } from "react";
+import { useEffect } from "react";
 import { socket, setActiveUsers } from "state";
 
 const ScrollableBox = styled(Box)`
@@ -50,9 +50,9 @@ const FriendListWidget = () => {
       });
 
       // Clean up event listener on unmount
-      // return () => {
-      //   socket.off('getUsers');
-      // };
+      return () => {
+        socket.off('getUsers');
+      };
     }
   }, [user, dispatch]);
 

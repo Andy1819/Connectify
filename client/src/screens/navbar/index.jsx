@@ -67,7 +67,7 @@ export default function Navbar() {
           sx={{
             "&:hover": {
               color:
-                mode === "dark"
+                mode == "dark"
                   ? theme.palette.primary.dark
                   : theme.palette.primary.dark,
               cursor: "pointer",
@@ -103,7 +103,7 @@ export default function Navbar() {
           </IconButton>
           <IconButton
             onClick={() => {
-              dispatch(setChatFriend());
+              dispatch(setChatFriend(null));
               navigate("/message");
             }}
           >
@@ -207,6 +207,7 @@ export default function Navbar() {
             </IconButton>
             <IconButton
               onClick={() => {
+                dispatch(setChatFriend(null));
                 navigate("/message");
               }}
             >

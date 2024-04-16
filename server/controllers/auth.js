@@ -12,18 +12,18 @@ export const register = async (req, res) => {
       lastName,
       email,
       password,
-      picturePath,
       friends,
       location,
       occupation,
     } = req.body;
+    const picturePath = req.imageUrl;
+    console.log(req.imageUrl);
     if (
       !firstName ||
       !lastName ||
       !email ||
       !password ||
       !picturePath ||
-      // !friends ||
       !location ||
       !occupation
     ) {

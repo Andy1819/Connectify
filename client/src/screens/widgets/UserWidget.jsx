@@ -4,39 +4,103 @@ import {
   LocationOnOutlined,
   WorkOutlineOutlined,
 } from "@mui/icons-material";
-import { Box, Typography, Divider, useTheme } from "@mui/material";
+import { Box, Typography, Divider, useTheme, Button } from "@mui/material";
+import { toast } from "react-toastify";
 import UserImage from "components/UserImage";
 import FlexBetween from "components/FlexBetween";
 import WidgetWrapper from "components/WidgetWrapper";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import EditAccountModal from "../../modal/EditAccountModal";
+import { setUser, setPosts } from "state";
 
 // props data came from homePage/index.jsx and profilePage/index.jsx
-const UserWidget = ({ userId, picturePath }) => {
-  const [user, setUser] = useState(null);
+const UserWidget = ({ userId, picturePath, isProfile = false }) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to manage modal open/close
   const { palette } = useTheme();
   const navigate = useNavigate();
   const token = useSelector((state) => state.token);
   const dark = palette.neutral.dark;
   const medium = palette.neutral.medium;
   const main = palette.neutral.main;
+  const user = useSelector((state) => state.user);
+  const LoggedInUser = useSelector((state) => state.user?._id);
   const BackendUrl = useSelector((state) => state.BackendUrl);
   const mode = useSelector((state) => state.mode);
-  const getUser = async () => {
-    const response = await fetch(`${BackendUrl}/users/${userId}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setUser(data);
+  const dispatch = useDispatch();
+  const [ProfileUser, setProfileUser] = useState(null);
+
+  // let suppose we get the other user profile  then we have to fetch the data of that user
+  const getUserData = async () => {
+    try {
+      const response = await fetch(`${BackendUrl}/users/${userId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const user = await response.json();
+
+      setProfileUser(user);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    getUserData();
+  }, []);
+
+  // Function to handle opening the edit account modal user can edit their own account
+
+  const isOwnProfile = LoggedInUser === userId; // we allow only the user to edit their own profile
+
+  const handleEditAccount = () => {
+    setIsEditModalOpen(true);
   };
 
-  useEffect(() => {
-    getUser();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
 
-  if (!user) {
+  const handleSaveEditedUser = async (editedUser) => {
+    console.log("editedUser", editedUser);
+    // Handle saving edited user data
+    try {
+      const response = await fetch(`${BackendUrl}/users/${userId}/edituser`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editedUser),
+      });
+
+      const json = await response.json();
+      if (json.success) {
+        setProfileUser(editedUser); // set the updated user object so it reflect changes in real time
+
+        // if the user is on their profile page then update the posts in the state
+        if (isProfile) {
+          dispatch(setPosts({ posts: json.userallposts }));
+        } else {
+          dispatch(setPosts({ posts: json.allfeedposts }));
+        }
+        toast.success(json.message);
+
+        setIsEditModalOpen(false);
+      } else {
+        console.log("Error saving edited user:", json.message);
+        toast.error(json.message);
+        setIsEditModalOpen(false);
+      }
+    } catch (err) {
+      console.log(err);
+      setIsEditModalOpen(false);
+    }
+  };
+
+  if (!ProfileUser) {
     return null;
   }
   // desturcture items from the user object
@@ -48,7 +112,9 @@ const UserWidget = ({ userId, picturePath }) => {
     viewedProfile,
     impressions,
     friends,
-  } = user;
+    linkedinProfile,
+    twitterProfile,
+  } = ProfileUser;
 
   return (
     <WidgetWrapper>
@@ -63,14 +129,14 @@ const UserWidget = ({ userId, picturePath }) => {
             <Typography
               onClick={() => navigate(`/profile/${userId}`)}
               variant="h4"
-              color={dark}
+              color={main}
               fontWeight="500"
               sx={{
                 "&:hover": {
                   color:
-                    mode === "dark"
-                      ? palette.primary.dark
-                      : palette.primary.dark,
+                    mode == "dark"
+                      ? palette.text.primary
+                      : palette.text.primary,
                   cursor: "pointer",
                 },
               }}
@@ -80,13 +146,17 @@ const UserWidget = ({ userId, picturePath }) => {
             {/* <Typography color={medium}>{friends.length} friends</Typography> */}
           </Box>
         </FlexBetween>
-        <ManageAccountsOutlined />
+        {isOwnProfile && (
+          <Button onClick={handleEditAccount} sx={{ borderRadius: "10px" }}>
+            <ManageAccountsOutlined />
+          </Button>
+        )}
       </FlexBetween>
 
       <Divider />
 
       {/* SECOND ROW */}
-      {/* p indicate padding  */}
+
       <Box p="1rem 0">
         <Box display="flex" alignItems="center" gap="1rem" mb="0.5rem">
           <LocationOnOutlined fontSize="large" sx={{ color: main }} />
@@ -119,37 +189,67 @@ const UserWidget = ({ userId, picturePath }) => {
       <Divider />
 
       {/* FOURTH ROW */}
+
       <Box p="1rem 0">
         <Typography fontSize="1rem" color={main} fontWeight="500" mb="1rem">
           Social Profiles
         </Typography>
 
+        {/* LinkedIn Profile */}
         <FlexBetween gap="1rem" mb="0.5rem">
+          <FlexBetween gap="1rem">
+            <img src="../assets/linkedin.png" alt="linkedin" />
+            <Box>
+              <Typography color={main} fontWeight="500">
+                LinkedIn
+              </Typography>
+              <a
+                href={linkedinProfile}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Typography
+                  sx={{ color: mode == "dark" ? palette.primary.dark : "blue" }}
+                >
+                  {linkedinProfile}
+                </Typography>
+              </a>
+            </Box>
+          </FlexBetween>
+          {/* <EditOutlined sx={{ color: main }} /> */}
+        </FlexBetween>
+
+        {/* Twitter Profile */}
+        <FlexBetween gap="1rem">
           <FlexBetween gap="1rem">
             <img src="../assets/twitter.png" alt="twitter" />
             <Box>
               <Typography color={main} fontWeight="500">
                 Twitter
               </Typography>
-              <Typography color={medium}>Social Network</Typography>
+              <a
+                href={twitterProfile}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Typography
+                  sx={{ color: mode == "dark" ? palette.primary.dark : "blue" }}
+                >
+                  {twitterProfile}
+                </Typography>
+              </a>
             </Box>
           </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
-        </FlexBetween>
-
-        <FlexBetween gap="1rem">
-          <FlexBetween gap="1rem">
-            <img src="../assets/linkedin.png" alt="linkedin" />
-            <Box>
-              <Typography color={main} fontWeight="500">
-                Linkedin
-              </Typography>
-              <Typography color={medium}>Network Platform</Typography>
-            </Box>
-          </FlexBetween>
-          <EditOutlined sx={{ color: main }} />
+          {/* <EditOutlined sx={{ color: main }} /> */}
         </FlexBetween>
       </Box>
+      {isEditModalOpen && (
+        <EditAccountModal
+          user={user}
+          onClose={handleCloseEditModal}
+          onSave={handleSaveEditedUser}
+        />
+      )}
     </WidgetWrapper>
   );
 };
