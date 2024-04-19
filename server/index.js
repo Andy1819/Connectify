@@ -110,7 +110,7 @@ const server = http.createServer(app); // Assuming `app` is your Express applica
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000"
     // origin: "https://social-media-web-app-mu.vercel.app",
   },
 });
@@ -121,6 +121,21 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("A user disconnected");
   });
+});
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  /* ADD Some Dummy DATA ONE TIME  */
+  // User.insertMany(users);
+  // Post.insertMany(posts);
+});
+
+server.listen(9000, () => {
+  console.log("HTTP server is running on port 9000");
 });
 
 io.on("connection", (socket) => {
@@ -139,19 +154,4 @@ io.on("connection", (socket) => {
     addUser(userData, socket.id);
     io.emit("getUsers", users);
   });
-});
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  /* ADD Some Dummy DATA ONE TIME  */
-  // User.insertMany(users);
-  // Post.insertMany(posts);
-});
-
-server.listen(9000, () => {
-  console.log("HTTP server is running on port 9000");
 });

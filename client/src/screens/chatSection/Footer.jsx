@@ -20,8 +20,9 @@ const Inputfield = styled(InputBase)`
 
 
 const Footer = ({sendText, setValue, value}) => {
-const mode = useSelector((state) => state.mode);
 
+
+const mode = useSelector((state) => state.mode);
 
   return (
     
@@ -52,7 +53,16 @@ const mode = useSelector((state) => state.mode);
               />
             </Search>
           <FlexBetween gap="1rem">
-            <IconButton aria-label="Send message">
+            <IconButton aria-label="Send message" onClick={() => {
+              // Check if the message is not empty before sending
+              if (value.trim() !== "") {
+                // Call the sendText function with the current value
+                sendText(value);
+
+                // Clear the input field after sending the message
+                setValue("");
+              }
+            }}>
               <Send />
             </IconButton>
             <IconButton aria-label="Record voice">
